@@ -1,0 +1,211 @@
+{
+  "name": "Bot Telegram Recomendador de Videos",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        -48
+      ],
+      "id": "373a580e-514a-402e-b6e7-3b21fcde03db",
+      "name": "Telegram Trigger",
+      "webhookId": "a60ff677-5719-4b63-96ca-77884d7ea7cf",
+      "credentials": {
+        "telegramApi": {
+          "id": "uIiHTtFiVHmTVGun",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Transforme a dúvida do usuário em uma query curta para buscar no YouTube.\nExemplo: \"como automatizar emails com n8n\" → \"n8n automação emails\".\n\nDúvida:  {{ $json.message.text }}\nRetorne apenas a query."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -48
+      ],
+      "id": "ceab8ca1-ed77-4e51-bc2e-56cf9d9a1d5a",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "BwLLY7BJ4QkbQn47",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/youtube/v3/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "part",
+              "value": "snippet"
+            },
+            {
+              "name": "channelId",
+              "value": "UC70mr11REaCqgKke7DPJoLg"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.content.parts[0].text }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "5"
+            },
+            {
+              "name": "key",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        192,
+        -48
+      ],
+      "id": "5ef98998-5d5d-47e6-8fb9-a6c82c677fcd",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=A partir desta lista de vídeos do canal Programação Dinâmica no YouTube (com título, descrição e link).\nResponda essa dúvida:{{ $('Message a model').item.json.content.parts[0].text }} .\n\nEscolha os 3 vídeos da lista que melhor respondem à dúvida. Para cada um, explique o porque da recomendação. (1 frase curta)\nRetorne no formato de texto, organizando as recomedações em tilulo, link e motivo da recomendação. Gere o link dos conteúdos a partir do id, se for vídeo ou playlis, identifique e crie a url, a partir dos ids fornecidos na lista de vídeos. \n\nComece a resposta com: \"Legal! Selecionei esses vídeos que vão te ajudar a estudar este assunto.\"\n\nLista de vídeos (em JSON):\n{{ $json[\"items\"].toJsonString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        400,
+        -48
+      ],
+      "id": "2c966317-bd19-452f-a562-7532894eb70d",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "BwLLY7BJ4QkbQn47",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.content.parts[0].text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        752,
+        -48
+      ],
+      "id": "6ade5e15-fb00-44e6-a5f5-1b598b346a7b",
+      "name": "Send a text message",
+      "webhookId": "ae31a4ba-3a6e-43c2-b704-779f2293e9e1",
+      "credentials": {
+        "telegramApi": {
+          "id": "uIiHTtFiVHmTVGun",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "efe446a4-e91b-470b-b6ff-d0c889e5e73e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6b53c191035626d386eccea8eeacdaf8c47d09f5e06160f44f3b202cd6cae8ae"
+  },
+  "id": "tkLrDgKIddFBjJaE",
+  "tags": []
+}
