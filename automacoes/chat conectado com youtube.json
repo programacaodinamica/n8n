@@ -1,0 +1,201 @@
+{
+  "name": "chat conectado com youtube",
+  "nodes": [
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Transforme a dúvida do usuário em uma query curta para buscar no YouTube.\nExemplo: \"como automatizar emails com n8n\" → \"n8n automação emails\".\n\nDúvida: {{ $json.chatInput }} \nRetorne apenas a query."
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        16
+      ],
+      "id": "74a040f0-4434-4f81-a010-a4d2ab6b8ede",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "BwLLY7BJ4QkbQn47",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/youtube/v3/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "part",
+              "value": "snippet"
+            },
+            {
+              "name": "channelId",
+              "value": "UC70mr11REaCqgKke7DPJoLg"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.content.parts[0].text }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "5"
+            },
+            {
+              "name": "key",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -560,
+        16
+      ],
+      "id": "97118511-8374-4a2d-8f7a-144e333d2552",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=A partir desta lista de vídeos do canal Programação Dinâmica no YouTube (com título, descrição e link).\nResponda essa dúvida:{{ $('Message a model').item.json.content.parts[0].text }} .\n\nEscolha os 3 vídeos da lista que melhor respondem à dúvida. Para cada um, explique o porque da recomendação. (1 frase curta)\nRetorne no formato de texto, organizando as recomedações em tilulo, link e motivo da recomendação. Gere o link dos conteúdos a partir do id, se for vídeo ou playlis, identifique e crie a url, a partir dos ids fornecidos na lista de vídeos. \n\nComece a resposta com: \"Fico feliz em saber que você quer aprender sobre este assunto com vídeos do Programação Dinâmica.\"\n\nTermine a mensagem com: \"Caso queira aprender mais, estou à disposição. Bons estudos!\"\n\nLista de vídeos (em JSON):\n{{ $json[\"items\"].toJsonString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        16
+      ],
+      "id": "d783ab1e-a22c-48c5-ab4e-8b52528ee41d",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "BwLLY7BJ4QkbQn47",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Olá, como posso te ajudar a estudar hoje?",
+        "options": {
+          "subtitle": "Aprenda com nossos vídeos.",
+          "title": "Chat do pgdinamica",
+          "responseMode": "responseNodes"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1136,
+        16
+      ],
+      "id": "0b9414f9-d3ac-4951-a060-71de10644103",
+      "name": "When chat message received",
+      "webhookId": "0ad862c7-3b2a-413d-b5d1-f3793a635ca5"
+    },
+    {
+      "parameters": {
+        "message": "={{ $json.content.parts[0].text }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7a610a9b-537c-427a-abc3-52c3f4d5a3b9",
+      "name": "Respond to Chat1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "043eae41-82c9-43bc-bc2b-d24d5274f29f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6b53c191035626d386eccea8eeacdaf8c47d09f5e06160f44f3b202cd6cae8ae"
+  },
+  "id": "ZPKoqUmEr8NV5z33",
+  "tags": []
+}

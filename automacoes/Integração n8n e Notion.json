@@ -1,0 +1,126 @@
+{
+  "name": "Integração n8n e Notion",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "event": "pagedUpdatedInDatabase",
+        "databaseId": {
+          "__rl": true,
+          "value": "28059acd-63cb-804a-8a77-d3122133a441",
+          "mode": "list",
+          "cachedResultName": "Registro de reuniões",
+          "cachedResultUrl": "https://www.notion.so/28059acd63cb804a8a77d3122133a441"
+        }
+      },
+      "type": "n8n-nodes-base.notionTrigger",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        0
+      ],
+      "id": "81e18787-7e38-46e1-94e7-22078c92d80e",
+      "name": "Notion Trigger",
+      "credentials": {
+        "notionApi": {
+          "id": "iiHuH1BO7qKGUp5Z",
+          "name": "Notion account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        0
+      ],
+      "id": "993f01fc-12b3-4034-a3dc-fba07d35ed71",
+      "name": "Transcribe a recording",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "BwLLY7BJ4QkbQn47",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion Trigger').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        128,
+        0
+      ],
+      "id": "c17d7272-a52e-4891-84fe-4b5be66fee69",
+      "name": "Update a database page",
+      "credentials": {
+        "notionApi": {
+          "id": "iiHuH1BO7qKGUp5Z",
+          "name": "Notion account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Notion Trigger": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "Update a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6a719050-b399-473c-92e9-4782bdedb0d4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6b53c191035626d386eccea8eeacdaf8c47d09f5e06160f44f3b202cd6cae8ae"
+  },
+  "id": "gFCJcgxXVead6jY5",
+  "tags": []
+}
